@@ -23,4 +23,4 @@ libgstqrplugin_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS)
 libgstqrplugin_la_LIBTOOLFLAGS = --tag=disable-static
 
 # headers we need but don't want installed
-noinst_HEADERS = gstplugin.h
+noinst_HEADERS = gstqr.h
