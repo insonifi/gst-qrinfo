@@ -19,6 +19,7 @@ make
 ### Installing
 - either `make install`
 - or copy it to `~/.local/share/gstreamer-1.0/plugins`
+
 ### Dependecies
 - gstreamer >=1.0
 - libqrencode >= 3.0
