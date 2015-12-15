@@ -291,12 +291,6 @@ gst_qr_transform_ip (GstBaseTransform * base, GstBuffer * outbuf)
 
   fps = num / denom;
 
-  GST_OBJECT_LOCK (render);
-  render->format = format;
-  render->width = width;
-  render->height = height;
-  GST_OBJECT_UNLOCK (render);
-
   if (GST_CLOCK_TIME_IS_VALID (GST_BUFFER_TIMESTAMP (outbuf)))
     gst_object_sync_values (GST_OBJECT (render),
                             GST_BUFFER_TIMESTAMP (outbuf));
