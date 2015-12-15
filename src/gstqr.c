@@ -210,22 +210,49 @@ static void
 gst_qr_render_yuv (Gstqr * render, guchar * pixbuf, QRcode * code,
                    int stride, int pstride)
 {
-  gint i, j, k, l;
+  gint i, j, k, l, m;
   gint xpos = render->x;
   gint ypos = render->y;
+  gint fheight = render->height;
   gint s = 2 * render->scale;
+  gint border = 3;
   gint r = -1;
   gint8 v;
   guchar *p, *c;
   guchar *data = code->data;
   gint width = code->width;
 
-  for (i = 0; i < width*s && i < stride * pstride; i++)
+  gint b = border * s;
+  gint bc = (border + width) * s;
+  gint bcb = (2 * border + width) * s;
+
+  /* Border Row*/
+  for (i = 0; i < b; i++)
+  {
+    p = pixbuf + (i + ypos) * stride + xpos;
+    for (m = 0; m <= bcb; m++)
+    {
+      *p++ = 255;//Y
+      for (l = 1; l < pstride; l++)
+        *p++ = 127;//U
+    }
+  }
+
+
+  for (i = b; i < bc; i++)
   {
     if ((i % s) == 0)
       r += 1;
-    p = pixbuf + ((i + ypos) * stride + xpos);
+    p = pixbuf + (i + ypos) * stride + xpos;
     c = data + r * width;
+    /* Border Col */
+    for (m = 0; m <= b; m++)
+    {
+      *p++ = 255;//Y
+      for (l = 1; l < pstride; l++)
+        *p++ = 127;//U
+    }
+    /* Code */
     for (j = 0; j < width; j++)
     {
       v = !(*c++ & 1);
@@ -236,8 +263,26 @@ gst_qr_render_yuv (Gstqr * render, guchar * pixbuf, QRcode * code,
           *p++ = 127;//U
       }
     }
+    /* Border Col */
+    for (m = 0; m <= b; m++)
+    {
+      *p++ = 255;//Y
+      for (l = 1; l < pstride; l++)
+        *p++ = 127;//U
+    }
   }
 
+  /* Border Row */
+  for (i = bc; i < bcb; i++)
+  {
+    p = pixbuf + (i + ypos) * stride + xpos;
+    for (m = 0; m <= bcb; m++)
+    {
+      *p++ = 255;//Y
+      for (l = 1; l < pstride; l++)
+        *p++ = 127;//U
+    }
+  }
 }
 
 
