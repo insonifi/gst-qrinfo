@@ -70,7 +70,7 @@ enum
   PROP_LAST,
 };
 
-#define VIDEO_FORMATS "{ I420, YV12, YUY2 } "
+#define VIDEO_FORMATS "{ YUY2 } "
 
 static GstStaticPadTemplate sink_template =
 GST_STATIC_PAD_TEMPLATE (
