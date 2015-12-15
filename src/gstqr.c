@@ -213,7 +213,6 @@ gst_qr_render_yuv (Gstqr * render, guchar * pixbuf, QRcode * code,
   gint i, j, k, l, m;
   gint xpos = render->x;
   gint ypos = render->y;
-  gint fheight = render->height;
   gint s = 2 * render->scale;
   gint border = 3;
   gint r = -1;
