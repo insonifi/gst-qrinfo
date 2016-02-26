@@ -27,7 +27,7 @@
  * <refsect2>
  * <title>Example launch line</title>
  * |[
- * gst-launch -v -m videotestsrc ! qr scale=2,x=10,y=10 ! autovideosink
+ * gst-launch -v -m videotestsrc ! qr scale=2 x=10 y=10 string="123" ! autovideosink
  * ]|
  * </refsect2>
  */
