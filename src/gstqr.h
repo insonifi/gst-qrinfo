@@ -49,6 +49,7 @@ struct _Gstqr {
   gint width;
   gint height;
   gchar *format;
+  const gchar *string;
   gint scale;
   gboolean silent;
 };

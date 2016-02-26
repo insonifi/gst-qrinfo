@@ -52,6 +52,7 @@ GST_DEBUG_CATEGORY_STATIC (gst_qr_debug);
 #define DEFAULT_SCALE 1
 #define DEFAULT_XPOS 10
 #define DEFAULT_YPOS 10
+#define DEFAULT_EMPTY_STR ""
 
 /* Filter signals and args */
 enum
@@ -66,6 +67,7 @@ enum
   PROP_SCALE,
   PROP_XPOS,
   PROP_YPOS,
+  PROP_STRING,
   PROP_LAST,
 };
 
@@ -129,6 +131,12 @@ gst_qr_class_init (GstqrClass * klass)
           0, G_MAXINT, DEFAULT_YPOS,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
+  g_object_class_install_property (gobject_class, PROP_STRING,
+      g_param_spec_string ("string", "String to add",
+          "String added to QR code data",
+          DEFAULT_EMPTY_STR,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
   gst_element_class_set_details_simple (gstelement_class,
     "qr",
     "Generic/Filter",
@@ -157,6 +165,7 @@ gst_qr_init (Gstqr *filter)
   filter->scale = 1;
   filter->x = 0;
   filter->y = 0;
+  filter->string = "";
 }
 
 static void
@@ -174,6 +183,10 @@ gst_qr_set_property (GObject * object, guint prop_id,
       break;
     case PROP_YPOS:
       filter->y = g_value_get_int (value);
+      break;
+    case PROP_STRING:
+      filter->string = g_strdup( g_value_get_string (value) );
+      g_printf ("%s\n", filter->string);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -196,6 +209,9 @@ gst_qr_get_property (GObject * object, guint prop_id,
       break;
     case PROP_YPOS:
       g_value_set_int (value, filter->y);
+      break;
+    case PROP_STRING:
+      g_value_set_string (value, filter->string);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -330,7 +346,7 @@ gst_qr_transform_ip (GstBaseTransform * base, GstBuffer * outbuf)
 
   const gchar *format;
   gint version = 0;
-  gint case_sensitive = 0;
+  gint case_sensitive = 1;
   gint width, height, num, denom;
   gfloat fps;
 
@@ -343,7 +359,6 @@ gst_qr_transform_ip (GstBaseTransform * base, GstBuffer * outbuf)
   vinfo = gst_video_info_new ();
   gst_video_info_from_caps (vinfo, caps);
 
-//   outbuf = gst_buffer_make_writable (outbuf);
   if (!gst_video_frame_map (&frame, vinfo, outbuf, GST_MAP_READWRITE))
     goto invalid_frame;
   structure = gst_caps_get_structure (caps, 0);
@@ -358,11 +373,17 @@ gst_qr_transform_ip (GstBaseTransform * base, GstBuffer * outbuf)
   if (GST_CLOCK_TIME_IS_VALID (GST_BUFFER_TIMESTAMP (outbuf)))
     gst_object_sync_values (GST_OBJECT (render),
                             GST_BUFFER_TIMESTAMP (outbuf));
-
-  qrdata = g_strdup_printf ("clock=%llu\ntimestamp=%" G_GUINT64_FORMAT "\nframe=%"
-                            G_GUINT64_FORMAT "\nwidth=%i\nheight=%i\nfps=%.2f\n"
-                            "format=%s",
-                            clock, timestamp, frameidx, width, height, fps, format);
+g_printf("%s\n", render->string);
+  qrdata = g_strdup_printf ("clock=%llu\n"
+                            "timestamp=%" G_GUINT64_FORMAT "\n"
+                            "frame=%" G_GUINT64_FORMAT "\n"
+                            "width=%d\n"
+                            "height=%d\n"
+                            "fps=%.2f\n"
+                            "format=%s\n"
+                            "%s",
+                            clock, timestamp, frameidx,
+                            width, height, fps, format, render->string);
   code = QRcode_encodeString (qrdata, version,
                               QR_ECLEVEL_M, QR_MODE_8, case_sensitive);
 
