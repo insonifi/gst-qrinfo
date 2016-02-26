@@ -43,7 +43,6 @@
 
 #include <qrencode.h>
 #include <glib.h>
-#include <glib/gprintf.h>
 #include <sys/time.h>
 
 #include "gstqr.h"
