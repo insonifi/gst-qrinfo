@@ -6,9 +6,10 @@ Element that superimposes QR coded metadata on the frame.
 gst-launch-1.0 videotestsrc ! qr ! xvimagesink
 ```
 ### Parameters
-- `scale` -- QR code scale factor
-- `x` -- X position offset
-- `y` -- Y position offset
+- `scale` &mdash; QR code scale factor
+- `x` &mdash; X position offset
+- `y` &mdash; Y position offset
+- `string` &mdash; Custom string to be appended to metadata
 
 ## Compiling
 All you need is run:
