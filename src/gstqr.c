@@ -186,7 +186,6 @@ gst_qr_set_property (GObject * object, guint prop_id,
       break;
     case PROP_STRING:
       filter->string = g_strdup( g_value_get_string (value) );
-      g_printf ("%s\n", filter->string);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -373,7 +372,7 @@ gst_qr_transform_ip (GstBaseTransform * base, GstBuffer * outbuf)
   if (GST_CLOCK_TIME_IS_VALID (GST_BUFFER_TIMESTAMP (outbuf)))
     gst_object_sync_values (GST_OBJECT (render),
                             GST_BUFFER_TIMESTAMP (outbuf));
-g_printf("%s\n", render->string);
+
   qrdata = g_strdup_printf ("clock=%llu\n"
                             "timestamp=%" G_GUINT64_FORMAT "\n"
                             "frame=%" G_GUINT64_FORMAT "\n"
