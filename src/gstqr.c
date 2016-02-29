@@ -237,23 +237,24 @@ static void
 gst_qr_render_yuv (Gstqr * render, GstVideoFrame * frame, QRcode * code)
 {
   gint i, j, k;
-  gint s = 2 * render->scale;
+  gint s = render->scale;
   gint x = render->x;
   gint y = render->y;
-  gint border = 3;
+  gint border = render->border;
   gint cm = 0;
   gint r = -1;
   gpointer data;
   guchar *p, *c;
   guchar *qr = code->data;
   gint qrwidth = code->width;
+  gint fwidth = GST_VIDEO_FRAME_WIDTH(frame);
+  gint fheight = GST_VIDEO_FRAME_HEIGHT(frame);
   gboolean v;
 
-  guint b = border * s;
-  guint cw = qrwidth * s;
-  guint w = (2 * border + qrwidth) * s;
-  guint b_w, b_h;
-  guint cw_h;
+  guint size = (2 * border + qrwidth);
+  guint w = size * s;
+  guint b, b_w, b_h;
+  guint cw, cw_h;
   guint w_w, w_h;
   guint xpos, ypos;
   guint qr_w;
@@ -263,6 +264,20 @@ gst_qr_render_yuv (Gstqr * render, GstVideoFrame * frame, QRcode * code)
   gboolean value[GST_VIDEO_MAX_COMPONENTS];
   const GstVideoInfo *vinfo = &(frame->info);
   const GstVideoFormatInfo *finfo = vinfo->finfo;
+  /* Fit scaling factor to frame */
+  if (w > fwidth) {
+    s = fwidth / size; 
+    w = size * s;
+  }
+  if (w > fheight) {
+    s = fheight / size;
+    w = size * s;
+  }
+  b = border * s;
+  cw = qrwidth * s;
+  /* Fit position to frame */  
+  x = (x + w) < fwidth ? x :  fwidth - w; 
+  y = (y + w) < fheight ? y :  fheight - w; 
 
   switch (GST_VIDEO_INFO_FLAGS (finfo)) {
     case GST_VIDEO_FORMAT_FLAG_GRAY:
@@ -292,6 +307,7 @@ gst_qr_render_yuv (Gstqr * render, GstVideoFrame * frame, QRcode * code)
     w_sub = GST_VIDEO_FORMAT_INFO_W_SUB(finfo, cm);
     h_sub = GST_VIDEO_FORMAT_INFO_H_SUB(finfo, cm);
 
+    /* Get values scaled to format */
     b_w = GST_VIDEO_SUB_SCALE (w_sub, b);
     b_h = GST_VIDEO_SUB_SCALE (h_sub, b);
     cw_h = GST_VIDEO_SUB_SCALE (h_sub, cw);
@@ -304,11 +320,11 @@ gst_qr_render_yuv (Gstqr * render, GstVideoFrame * frame, QRcode * code)
     if (!value[cm]) {
       val = val / 2;
     }
-
+    
     /* Fill QR Code background */
     for (i = 0; i < w_h; i++)
     {
-      p = data + (i + (ypos)) * stride +
+      p = data + (i + ypos) * stride +
                       xpos * pstride;
       for (j = 0; j < w_w; j++)
       {
@@ -361,7 +377,7 @@ gst_qr_transform_ip (GstBaseTransform * base, GstBuffer * outbuf)
   const gchar *format;
   gint version = 0;
   gint case_sensitive = 1;
-  gint width, height, num, denom;
+  gint width, height, num, denom; 
   gfloat fps;
 
   struct timeval tm;
@@ -400,6 +416,7 @@ gst_qr_transform_ip (GstBaseTransform * base, GstBuffer * outbuf)
                             width, height, fps, format, render->string);
   code = QRcode_encodeString (qrdata, version,
                               QR_ECLEVEL_M, QR_MODE_8, case_sensitive);
+  
 
   gst_qr_render_yuv (render, &frame, code);
 
