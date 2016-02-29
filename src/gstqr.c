@@ -170,10 +170,11 @@ gst_qr_class_init (GstqrClass * klass)
 static void
 gst_qr_init (Gstqr *filter)
 {
-  filter->scale = 1;
-  filter->x = 0;
-  filter->y = 0;
-  filter->string = "";
+  filter->scale = DEFAULT_SCALE;
+  filter->x = DEFAULT_XPOS; 
+  filter->y = DEFAULT_YPOS;
+  filter->string = DEFAULT_EMPTY_STR;
+  filter->border = DEFAULT_BORDER;
 }
 
 static void
