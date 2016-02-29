@@ -53,6 +53,7 @@ GST_DEBUG_CATEGORY_STATIC (gst_qr_debug);
 #define DEFAULT_XPOS 10
 #define DEFAULT_YPOS 10
 #define DEFAULT_EMPTY_STR ""
+#define DEFAULT_BORDER 2
 
 /* Filter signals and args */
 enum
@@ -68,6 +69,7 @@ enum
   PROP_XPOS,
   PROP_YPOS,
   PROP_STRING,
+  PROP_BORDER,
   PROP_LAST,
 };
 
@@ -137,6 +139,12 @@ gst_qr_class_init (GstqrClass * klass)
           DEFAULT_EMPTY_STR,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
+  g_object_class_install_property (gobject_class, PROP_BORDER,
+      g_param_spec_int ("border", "Border width",
+          "Width of border around QR code",
+          0, G_MAXINT, DEFAULT_BORDER,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
   gst_element_class_set_details_simple (gstelement_class,
     "qr",
     "Generic/Filter",
@@ -187,6 +195,9 @@ gst_qr_set_property (GObject * object, guint prop_id,
     case PROP_STRING:
       filter->string = g_strdup( g_value_get_string (value) );
       break;
+    case PROP_BORDER:
+      filter->border = g_value_get_int (value);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -211,6 +222,9 @@ gst_qr_get_property (GObject * object, guint prop_id,
       break;
     case PROP_STRING:
       g_value_set_string (value, filter->string);
+      break;
+    case PROP_BORDER:
+      g_value_set_int (value, filter->border);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);

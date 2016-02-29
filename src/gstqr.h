@@ -51,6 +51,7 @@ struct _Gstqr {
   gchar *format;
   const gchar *string;
   gint scale;
+  gint border;
   gboolean silent;
 };
 
