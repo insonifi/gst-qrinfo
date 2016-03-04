@@ -236,34 +236,53 @@ gst_qr_get_property (GObject * object, guint prop_id,
 static void
 gst_qr_render_yuv (Gstqr * render, GstVideoFrame * frame, QRcode * code)
 {
-  gint i, j, k;
+  gint i, j, k, l;
   gint s = render->scale;
   gint x = render->x;
   gint y = render->y;
   gint border = render->border;
-  gint cm = 0;
-  gint r = -1;
+  gint comp = 0;
   gpointer data;
-  guchar *p, *c;
+  guchar *p, *code_val;
   guchar *qr = code->data;
   gint qrwidth = code->width;
   gint fwidth = GST_VIDEO_FRAME_WIDTH(frame);
   gint fheight = GST_VIDEO_FRAME_HEIGHT(frame);
-  gboolean v;
+  gboolean is_white;
 
   guint size = (2 * border + qrwidth);
   guint w = size * s;
   guint b, b_w, b_h;
-  guint cw, cw_h;
   guint w_w, w_h;
   guint xpos, ypos;
-  guint qr_w;
+  guint qr_i, qr_j;
+  guint row = 0;
 
   guint stride, pstride, val, w_sub, h_sub;
   guint n_comp = GST_VIDEO_FRAME_N_COMPONENTS (frame);
   gboolean value[GST_VIDEO_MAX_COMPONENTS];
   const GstVideoInfo *vinfo = &(frame->info);
   const GstVideoFormatInfo *finfo = vinfo->finfo;
+
+  switch (GST_VIDEO_INFO_FLAGS (finfo)) {
+    case GST_VIDEO_FORMAT_FLAG_GRAY:
+    case GST_VIDEO_FORMAT_FLAG_RGB:
+      for (comp = 0; comp < n_comp; comp++)
+      {
+        value[comp] = TRUE;
+      }
+      break;
+    case GST_VIDEO_FORMAT_FLAG_YUV:
+      value[comp] = TRUE;
+      for (comp = 1; comp < n_comp; comp++)
+      {
+        value[comp] = FALSE;
+      }
+      break;
+    default:
+      break;
+  }
+
   /* Fit scaling factor to frame */
   if (w > fwidth) {
     s = fwidth / size; 
@@ -274,53 +293,31 @@ gst_qr_render_yuv (Gstqr * render, GstVideoFrame * frame, QRcode * code)
     w = size * s;
   }
   b = border * s;
-  cw = qrwidth * s;
   /* Fit position to frame */  
   x = (x + w) < fwidth ? x :  fwidth - w; 
   y = (y + w) < fheight ? y :  fheight - w; 
 
-  switch (GST_VIDEO_INFO_FLAGS (finfo)) {
-    case GST_VIDEO_FORMAT_FLAG_GRAY:
-    case GST_VIDEO_FORMAT_FLAG_RGB:
-      for (cm = 0; cm < n_comp; cm++)
-      {
-        value[cm] = TRUE;
-      }
-      break;
-    case GST_VIDEO_FORMAT_FLAG_YUV:
-      value[cm] = TRUE;
-      for (cm = 1; cm < n_comp; cm++)
-      {
-        value[cm] = FALSE;
-      }
-      break;
-    default:
-      break;
-  }
-
-  for (cm = 0; cm < n_comp; cm++)
+  for (comp = 0; comp < n_comp; comp++)
   {
-    stride = GST_VIDEO_FRAME_COMP_STRIDE (frame, cm);
-    pstride = GST_VIDEO_FRAME_COMP_PSTRIDE (frame, cm);
-    data = GST_VIDEO_FRAME_COMP_DATA (frame, cm);
-    val = (1 << GST_VIDEO_FRAME_COMP_DEPTH (frame, cm)) - 1;
-    w_sub = GST_VIDEO_FORMAT_INFO_W_SUB(finfo, cm);
-    h_sub = GST_VIDEO_FORMAT_INFO_H_SUB(finfo, cm);
+    stride = GST_VIDEO_FRAME_COMP_STRIDE (frame, comp);
+    pstride = GST_VIDEO_FRAME_COMP_PSTRIDE (frame, comp);
+    data = GST_VIDEO_FRAME_COMP_DATA (frame, comp);
+    val = (1 << GST_VIDEO_FRAME_COMP_DEPTH (frame, comp)) - 1;
+    w_sub = GST_VIDEO_FORMAT_INFO_W_SUB(finfo, comp);
+    h_sub = GST_VIDEO_FORMAT_INFO_H_SUB(finfo, comp);
 
     /* Get values scaled to format */
     b_w = GST_VIDEO_SUB_SCALE (w_sub, b);
     b_h = GST_VIDEO_SUB_SCALE (h_sub, b);
-    cw_h = GST_VIDEO_SUB_SCALE (h_sub, cw);
     w_w = GST_VIDEO_SUB_SCALE (w_sub, w);
     w_h = GST_VIDEO_SUB_SCALE (h_sub, w);
-    qr_w = GST_VIDEO_SUB_SCALE (w_sub, qrwidth);
     xpos = GST_VIDEO_SUB_SCALE (w_sub, x);
     ypos = GST_VIDEO_SUB_SCALE (h_sub, y);
 
-    if (!value[cm]) {
+    if (!value[comp]) {
       val = val / 2;
-    }
-    
+    }  
+
     /* Fill QR Code background */
     for (i = 0; i < w_h; i++)
     {
@@ -333,23 +330,27 @@ gst_qr_render_yuv (Gstqr * render, GstVideoFrame * frame, QRcode * code)
       }
     }
 
-    for (i = 0; i < cw_h; i++)
+    for (qr_i = 0; qr_i < qrwidth && value[comp]; qr_i++)
     {
-      if ((i % s) == 0)
-        r += 1;
-      p = data + (i + (ypos + b_h)) * stride +
-                      (xpos + b_w) * pstride;
-      c = qr + r * qrwidth;
-      /* Code */
-      for (j = 0; j < qr_w; j++)
+      for (l = 0; l < s; l++)
       {
-        v = !(*c++ & 1) || !value[cm];
-        for (k = 0; k < s; k++)
+        p = data + (qr_i + (ypos + b_h + row++)) * stride +
+                            (xpos + b_w) * pstride;
+        code_val = qr + qr_i * qrwidth;
+        /* Code */
+        for (qr_j = 0; qr_j < qrwidth; qr_j++)
         {
-          *p = val * v;
-          p += pstride;
+          /* Get QR code pixel value */
+          is_white = !(*code_val++ & 1);
+          /* draw single pixel of QR code */
+          for (k = 0; k < s; k++)
+          {
+            *p = val * is_white;
+            p += pstride;
+          }
         }
       }
+      row--;
     }
   }
 }
@@ -414,15 +415,19 @@ gst_qr_transform_ip (GstBaseTransform * base, GstBuffer * outbuf)
                             "%s",
                             clock, timestamp, frameidx,
                             width, height, fps, format, render->string);
+
   code = QRcode_encodeString (qrdata, version,
                               QR_ECLEVEL_M, QR_MODE_8, case_sensitive);
-  
+  if (code == NULL) {
+    goto invalid_frame;
+  }
 
   gst_qr_render_yuv (render, &frame, code);
 
   gst_video_info_free (vinfo);
   g_free(qrdata);
   QRcode_free(code);
+
   gst_video_frame_unmap (&frame);
 invalid_frame:
   return GST_FLOW_OK;
