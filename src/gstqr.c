@@ -365,7 +365,6 @@ gst_qr_transform_ip (GstBaseTransform * base, GstBuffer * outbuf)
   Gstqr *render = GST_QR (base);
   GstPad *srcpad = GST_BASE_TRANSFORM_SRC_PAD (base);
   GstCaps *caps = gst_pad_get_current_caps (srcpad);
-  GstStructure *structure;
   GstVideoInfo *vinfo;
   GstVideoFrame frame;
 
@@ -392,12 +391,13 @@ gst_qr_transform_ip (GstBaseTransform * base, GstBuffer * outbuf)
 
   if (!gst_video_frame_map (&frame, vinfo, outbuf, GST_MAP_READWRITE))
     goto invalid_frame;
-  structure = gst_caps_get_structure (caps, 0);
-  format = gst_structure_get_string (structure, "format");
 
-  gst_structure_get_int (structure, "width", &width);
-  gst_structure_get_int (structure, "height", &height);
-  gst_structure_get_fraction (structure, "framerate", &num, &denom);
+  format = GST_VIDEO_INFO_NAME (vinfo);
+  width = GST_VIDEO_FRAME_WIDTH (&frame);
+  height = GST_VIDEO_FRAME_HEIGHT (&frame);
+
+  num = GST_VIDEO_INFO_FPS_N (vinfo);
+  denom = GST_VIDEO_INFO_FPS_D (vinfo);
 
   fps = num / denom;
 
