@@ -379,12 +379,7 @@ gst_qr_transform_ip (GstBaseTransform * base, GstBuffer * outbuf)
   gint case_sensitive = 1;
   gint width, height, num, denom; 
   gfloat fps;
-
-  struct timeval tm;
-  gettimeofday (&tm, NULL);
-
-  unsigned long long clock = tm.tv_sec * 1000 + tm.tv_usec;
-
+  guint64 clock = g_get_real_time ();
 
   vinfo = gst_video_info_new ();
   gst_video_info_from_caps (vinfo, caps);
@@ -405,7 +400,7 @@ gst_qr_transform_ip (GstBaseTransform * base, GstBuffer * outbuf)
     gst_object_sync_values (GST_OBJECT (render),
                             GST_BUFFER_TIMESTAMP (outbuf));
 
-  qrdata = g_strdup_printf ("clock=%llu\n"
+  qrdata = g_strdup_printf ("clock=%" G_GUINT64_FORMAT "\n"
                             "timestamp=%" G_GUINT64_FORMAT "\n"
                             "frame=%" G_GUINT64_FORMAT "\n"
                             "width=%d\n"
