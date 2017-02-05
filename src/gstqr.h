@@ -30,32 +30,31 @@ G_BEGIN_DECLS
 #define GST_TYPE_QR \
   (gst_qr_get_type())
 #define GST_QR(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_QR,Gstqr))
+  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_QR,GstQr))
 #define GST_QR_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_QR,GstqrClass))
+  (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_QR,GstQrClass))
 #define GST_IS_QR(obj) \
   (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_QR))
 #define GST_IS_QR_CLASS(klass) \
   (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_QR))
 
-typedef struct _Gstqr      Gstqr;
-typedef struct _GstqrClass GstqrClass;
+typedef struct _GstQr      GstQr;
+typedef struct _GstQrClass GstQrClass;
 
-struct _Gstqr {
+struct _GstQr {
   GstBaseTransform element;
 
   gint x;
   gint y;
   gint width;
   gint height;
-  gchar *format;
-  const gchar *string;
+  const gchar *format;
   gint scale;
   gint border;
   gboolean silent;
 };
 
-struct _GstqrClass {
+struct _GstQrClass {
   GstBaseTransformClass parent_class;
 };
 
